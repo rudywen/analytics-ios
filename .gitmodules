@@ -1,3 +1,0 @@
-[submodule "Analytics/Integrations/Expa"]
-	path = Analytics/Integrations/Expa
-	url = git@github.com:operatordev/ExpaProvider.git
