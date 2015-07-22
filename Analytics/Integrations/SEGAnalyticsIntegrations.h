@@ -47,7 +47,7 @@
 #endif
 
 #if defined(USE_ANALYTICS_EXPA) || defined(USE_ANALYTICS_ALL)
-#import "SEGExpaProviderIntegration.h"
+#import "SEGExpaIntegration.h"
 #endif
 
 #if defined(USE_ANALYTICS_MIXPANEL) || defined(USE_ANALYTICS_ALL)
