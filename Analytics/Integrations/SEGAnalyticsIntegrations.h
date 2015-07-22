@@ -46,6 +46,10 @@
 #import "SEGKahunaIntegration.h"
 #endif
 
+#if defined(USE_ANALYTICS_EXPA) || defined(USE_ANALYTICS_ALL)
+#import "SEGExpaProviderIntegration.h"
+#endif
+
 #if defined(USE_ANALYTICS_MIXPANEL) || defined(USE_ANALYTICS_ALL)
 #import "SEGMixpanelIntegration.h"
 #endif
