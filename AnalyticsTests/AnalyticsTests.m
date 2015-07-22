@@ -137,9 +137,6 @@ static id _mockNSBundle;
                 @"token" : @"89f86c4aa2ce5b74cb47eb5ec95ad1f9",
                 @"initialPageview" : @NO
             },
-            @"MoEngage" : @{
-                @"apiKey" : @"89f86c4aa2ce5b74cb47eb5ec95ad1f9"
-            },
             @"Tapstream" : @{
                 @"accountName" : @"segmentio-test",
                 @"sdkSecret" : @"Rq8qqm3KQ_iDeqyOa55aqQ",
@@ -163,7 +160,7 @@ static id _mockNSBundle;
 
 - (void)testHasIntegrations
 {
-    XCTAssertEqual(18, self.analytics.configuration.integrations.count);
+    XCTAssertEqual(17, self.analytics.configuration.integrations.count);
 }
 
 - (void)testForwardsIdentify

@@ -50,10 +50,6 @@
 #import "SEGMixpanelIntegration.h"
 #endif
 
-#if defined(USE_ANALYTICS_MOENGAGE) || defined(USE_ANALYTICS_ALL)
-#import "SEGMoEngageIntegration.h"
-#endif
-
 #if defined(USE_ANALYTICS_OPTIMIZELY) || defined(USE_ANALYTICS_ALL)
 #import "SEGOptimizelyIntegration.h"
 #endif
@@ -77,3 +73,5 @@
 #if defined(USE_ANALYTICS_UXCAM) || defined(USE_ANALYTICS_ALL)
 #import "SEGUXCamIntegration.h"
 #endif
+
+

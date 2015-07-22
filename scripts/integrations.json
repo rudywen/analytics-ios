@@ -81,13 +81,6 @@
       }]
     },
     {
-      "name": "MoEngage",
-      "dependencies": [{
-        "name": "MoEngage-iOS-SDK",
-        "version": "1.4.3"
-      }]
-    },
-    {
       "name": "Optimizely",
       "dependencies": [{
         "name": "Optimizely-iOS-SDK",
