@@ -32,9 +32,8 @@ const NSString *SEGCentralManagerClass = @"CBCentralManager";
     _queue = dispatch_queue_create("io.segment.bluetooth.queue", NULL);
 
     // Check if we can use newer CoreBluetooth functions
-    NSInteger addr = &CBCentralManagerOptionShowPowerAlertKey;
     BOOL hasOptions = [centralManager instancesRespondToSelector:@selector(initWithDelegate:queue:options:)];
-    if (hasOptions && addr != 0) {
+    if (hasOptions && &CBCentralManagerOptionShowPowerAlertKey) {
         _manager = [[centralManager alloc] initWithDelegate:self queue:_queue options:@{ CBCentralManagerOptionShowPowerAlertKey : @NO }];
     } else {
         _manager = [[centralManager alloc] initWithDelegate:self queue:_queue];
