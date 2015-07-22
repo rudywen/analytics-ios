@@ -43,6 +43,13 @@
       }]
     },
     {
+      "name": "Expa",
+      "dependencies": [{
+        "name": "Mixpanel",
+        "version": "2.8.2"
+      }]
+    },
+    {
       "name": "Flurry",
       "dependencies": [{
         "name": "FlurrySDK",

@@ -295,6 +295,9 @@
 		DAEB6FF11AC9EBCA003E7FB3 /* SEGApptimizeIntegration.h in Headers */ = {isa = PBXBuildFile; fileRef = DAEB6FEF1AC9EBCA003E7FB3 /* SEGApptimizeIntegration.h */; };
 		DAEB6FF21AC9EBCA003E7FB3 /* SEGApptimizeIntegration.m in Sources */ = {isa = PBXBuildFile; fileRef = DAEB6FF01AC9EBCA003E7FB3 /* SEGApptimizeIntegration.m */; };
 		DAEB6FF31AC9EBCA003E7FB3 /* SEGApptimizeIntegration.m in Sources */ = {isa = PBXBuildFile; fileRef = DAEB6FF01AC9EBCA003E7FB3 /* SEGApptimizeIntegration.m */; };
+		DB1681311B603B3500753BDC /* SEGExpaIntegration.h in Headers */ = {isa = PBXBuildFile; fileRef = DB16812F1B603B3500753BDC /* SEGExpaIntegration.h */; };
+		DB1681321B603B3500753BDC /* SEGExpaIntegration.m in Sources */ = {isa = PBXBuildFile; fileRef = DB1681301B603B3500753BDC /* SEGExpaIntegration.m */; };
+		DB1681331B603B3B00753BDC /* SEGExpaIntegration.m in Sources */ = {isa = PBXBuildFile; fileRef = DB1681301B603B3500753BDC /* SEGExpaIntegration.m */; };
 		EA25892317C6979D000CEF61 /* SEGAnalytics.h in Headers */ = {isa = PBXBuildFile; fileRef = F7200B7B17659B2F003F3138 /* SEGAnalytics.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		EA65F96717C2ABA600389A1A /* SEGAnalyticsIntegration.m in Sources */ = {isa = PBXBuildFile; fileRef = EA65F96517C2ABA600389A1A /* SEGAnalyticsIntegration.m */; };
 		EAA604C917C28C7C00911919 /* SEGAnalyticsRequest.h in Headers */ = {isa = PBXBuildFile; fileRef = EAA604C717C28C7C00911919 /* SEGAnalyticsRequest.h */; };
@@ -610,6 +613,8 @@
 		DA7B09C01AF18ED100A65698 /* Apptimize+VariablesInternal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "Apptimize+VariablesInternal.h"; path = "Pods/Apptimize/Apptimize.framework/Headers/Apptimize+VariablesInternal.h"; sourceTree = "<group>"; };
 		DAEB6FEF1AC9EBCA003E7FB3 /* SEGApptimizeIntegration.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SEGApptimizeIntegration.h; path = Apptimize/SEGApptimizeIntegration.h; sourceTree = "<group>"; };
 		DAEB6FF01AC9EBCA003E7FB3 /* SEGApptimizeIntegration.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SEGApptimizeIntegration.m; path = Apptimize/SEGApptimizeIntegration.m; sourceTree = "<group>"; };
+		DB16812F1B603B3500753BDC /* SEGExpaIntegration.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SEGExpaIntegration.h; sourceTree = "<group>"; };
+		DB1681301B603B3500753BDC /* SEGExpaIntegration.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SEGExpaIntegration.m; sourceTree = "<group>"; };
 		E83F0FBE9BA94A03A4883160 /* libPods-Analytics.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-Analytics.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		EA3B4CC617C8900A00233EA9 /* SegmentioTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SegmentioTests.m; path = ../AnalyticsTests/SegmentioTests.m; sourceTree = "<group>"; };
 		EA65F96417C2ABA600389A1A /* SEGAnalyticsIntegration.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SEGAnalyticsIntegration.h; path = ../SEGAnalyticsIntegration.h; sourceTree = "<group>"; };
@@ -1121,6 +1126,7 @@
 				D3EDB63B18C315F100A88A7E /* Bugsnag */,
 				D3EDB63E18C315F100A88A7E /* Countly */,
 				D3EDB64118C315F100A88A7E /* Crittercism */,
+				DB1681271B603A7E00753BDC /* Expa */,
 				D3EDB64418C315F100A88A7E /* Flurry */,
 				D3EDB64718C315F100A88A7E /* GoogleAnalytics */,
 				32F638181A81348700C65643 /* Kahuna */,
@@ -1234,6 +1240,16 @@
 			);
 			name = Apptimize;
 			sourceTree = "<group>";
+		};
+		DB1681271B603A7E00753BDC /* Expa */ = {
+			isa = PBXGroup;
+			children = (
+				DB16812F1B603B3500753BDC /* SEGExpaIntegration.h */,
+				DB1681301B603B3500753BDC /* SEGExpaIntegration.m */,
+			);
+			name = Expa;
+			path = Analytics/Integrations/Expa;
+			sourceTree = SOURCE_ROOT;
 		};
 		EA722AF617C87BB00016E8B0 /* AnalyticsTests */ = {
 			isa = PBXGroup;
@@ -1423,6 +1439,7 @@
 				32AD186019AFCA100047D5F0 /* MPABTestDesignerDisconnectMessage.h in Headers */,
 				6E85F3941B2F980B00763913 /* MPLogger.h in Headers */,
 				32AD186119AFCA100047D5F0 /* MPABTestDesignerMessage.h in Headers */,
+				DB1681311B603B3500753BDC /* SEGExpaIntegration.h in Headers */,
 				32AD186219AFCA100047D5F0 /* MPABTestDesignerSnapshotRequestMessage.h in Headers */,
 				32AD186319AFCA100047D5F0 /* MPABTestDesignerSnapshotResponseMessage.h in Headers */,
 				32AD186419AFCA100047D5F0 /* MPABTestDesignerTweakRequestMessage.h in Headers */,
@@ -1792,6 +1809,7 @@
 				3242C9BA1946AFD900FBE441 /* SEGGoogleAnalyticsIntegration.m in Sources */,
 				3242C9B91946AFD400FBE441 /* SEGFlurryIntegration.m in Sources */,
 				6EFAD9AE1B41A97C000664C1 /* SEGTaplyticsIntegrationTests.m in Sources */,
+				DB1681331B603B3B00753BDC /* SEGExpaIntegration.m in Sources */,
 				6EB2963E1B4C3B2F00805337 /* SEGTapstreamIntegrationTests.m in Sources */,
 				32CFF3D019AE5BCF00193D3D /* SEGAppsFlyerIntegration.m in Sources */,
 				DAEB6FF31AC9EBCA003E7FB3 /* SEGApptimizeIntegration.m in Sources */,
@@ -1844,6 +1862,7 @@
 				EA65F96717C2ABA600389A1A /* SEGAnalyticsIntegration.m in Sources */,
 				32225232199AD6D200478B1A /* SEGReachability.m in Sources */,
 				D3EDB66318C315F100A88A7E /* SEGLocalyticsIntegration.m in Sources */,
+				DB1681321B603B3500753BDC /* SEGExpaIntegration.m in Sources */,
 				D3EDB65B18C315F100A88A7E /* SEGCountlyIntegration.m in Sources */,
 				32A69C231979CF4A00D69943 /* SEGOptimizelyIntegration.m in Sources */,
 				32CFF3CF19AE5BCF00193D3D /* SEGAppsFlyerIntegration.m in Sources */,
