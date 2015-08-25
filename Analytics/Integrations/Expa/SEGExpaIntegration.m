@@ -16,8 +16,6 @@
 #import <iAd/iAd.h>
 
 #define EXPA_API_URL_STRING @"https://changeme.collector.expa.com/expadata/clientcollector/changeme"
-NSString *const SEGAdvertisingClassIdentifier = @"ASIdentifierManager";
-NSString *const SEGADClientClass = @"ADClient";
 
 NSString *const kExpaAnalyticsDidSendRequestNotification    = @"ExpaAnalyticsDidSendRequest";
 NSString *const kExpaAnalyticsRequestDidSucceedNotification = @"ExpaAnalyticsRequestDidSucceed";
@@ -54,18 +52,6 @@ static NSString *GetDeviceModel()
     NSString *results = [NSString stringWithCString:result encoding:NSUTF8StringEncoding];
     return results;
 }
-
-static BOOL GetAdTrackingEnabled()
-{
-    BOOL result = NO;
-    Class advertisingManager = NSClassFromString(SEGAdvertisingClassIdentifier);
-    SEL sharedManagerSelector = NSSelectorFromString(@"sharedManager");
-    id sharedManager = ((id (*)(id, SEL))[advertisingManager methodForSelector:sharedManagerSelector])(advertisingManager, sharedManagerSelector);
-    SEL adTrackingEnabledSEL = NSSelectorFromString(@"isAdvertisingTrackingEnabled");
-    result = ((BOOL (*)(id, SEL))[sharedManager methodForSelector:adTrackingEnabledSEL])(sharedManager, adTrackingEnabledSEL);
-    return result;
-}
-
 
 @interface SEGExpaIntegration ()
 
@@ -134,9 +120,6 @@ static BOOL GetAdTrackingEnabled()
         dict[@"manufacturer"] = @"Apple";
         dict[@"model"] = GetDeviceModel();
         dict[@"id"] = [[device identifierForVendor] UUIDString];
-        if (NSClassFromString(SEGAdvertisingClassIdentifier)) {
-            dict[@"adTrackingEnabled"] = @(GetAdTrackingEnabled());
-        }
         if (self.enableAdvertisingTracking) {
             NSString *idfa = SEGIDFA();
             if (idfa.length) dict[@"advertisingId"] = idfa;
