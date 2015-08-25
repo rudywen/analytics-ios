@@ -13,7 +13,6 @@
 #import "SEGBluetooth.h"
 #import "SEGReachability.h"
 #import "SEGLocation.h"
-#import <iAd/iAd.h>
 
 #define EXPA_API_URL_STRING @"https://changeme.collector.expa.com/expadata/clientcollector/changeme"
 
@@ -141,27 +140,6 @@ static NSString *GetDeviceModel()
                         @"width" : @(screenSize.width),
                         @"height" : @(screenSize.height)
                         };
-
-#if !(TARGET_IPHONE_SIMULATOR)
-    Class adClient = NSClassFromString(SEGADClientClass);
-    if (adClient) {
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Warc-performSelector-leaks"
-        id sharedClient = [adClient performSelector:NSSelectorFromString(@"sharedClient")];
-#pragma clang diagnostic pop
-        void (^completionHandler)(BOOL iad) = ^(BOOL iad) {
-            if (iad) {
-                dict[@"referrer"] = @{ @"type" : @"iad" };
-            }
-        };
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Warc-performSelector-leaks"
-        [sharedClient performSelector:NSSelectorFromString(@"determineAppInstallationAttributionWithCompletionHandler:")
-                           withObject:completionHandler];
-#pragma clang diagnostic pop
-    }
-#endif
-
     return dict;
 }
 
@@ -549,17 +527,17 @@ static NSString *GetDeviceModel()
 
 - (NSURL *)userIDURL
 {
-    return SEGAnalyticsURLForFilename(@"segmentio.userId");
+    return SEGAnalyticsURLForFilename(@"expa.userId");
 }
 
 - (NSURL *)queueURL
 {
-    return SEGAnalyticsURLForFilename(@"segmentio.queue.plist");
+    return SEGAnalyticsURLForFilename(@"expa.queue.plist");
 }
 
 - (NSURL *)traitsURL
 {
-    return SEGAnalyticsURLForFilename(@"segmentio.traits.plist");
+    return SEGAnalyticsURLForFilename(@"expa.traits.plist");
 }
 
 - (void)setConfiguration:(SEGAnalyticsConfiguration *)configuration
