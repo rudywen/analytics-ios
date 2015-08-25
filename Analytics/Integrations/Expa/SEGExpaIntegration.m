@@ -1,10 +1,5 @@
-//
-//  ExpaProvider.m
-//  Analytics
-//
-//  Created by Justin Ho on 3/19/14.
-//  Copyright (c) 2014 Expa. All rights reserved.
-//
+// SegmentioIntegration.m
+// Copyright (c) 2014 Segment.io. All rights reserved.
 
 #include <sys/sysctl.h>
 
@@ -18,21 +13,25 @@
 #import "SEGBluetooth.h"
 #import "SEGReachability.h"
 #import "SEGLocation.h"
+#import <iAd/iAd.h>
 
 #define EXPA_API_URL_STRING @"https://changeme.collector.expa.com/expadata/clientcollector/changeme"
+NSString *const SEGAdvertisingClassIdentifier = @"ASIdentifierManager";
+NSString *const SEGADClientClass = @"ADClient";
 
 NSString *const kExpaAnalyticsDidSendRequestNotification    = @"ExpaAnalyticsDidSendRequest";
 NSString *const kExpaAnalyticsRequestDidSucceedNotification = @"ExpaAnalyticsRequestDidSucceed";
 NSString *const kExpaAnalyticsRequestDidFailNotification    = @"ExpaAnalyticsRequestDidFail";
-
-static NSString *GenerateUUIDString() {
+static NSString *GenerateUUIDString()
+{
     CFUUIDRef theUUID = CFUUIDCreate(NULL);
     NSString *UUIDString = (__bridge_transfer NSString *)CFUUIDCreateString(NULL, theUUID);
     CFRelease(theUUID);
     return UUIDString;
 }
 
-static NSString *GetAnonymousId(BOOL reset) {
+static NSString *GetAnonymousId(BOOL reset)
+{
     // We've chosen to generate a UUID rather than use the UDID (deprecated in iOS 5),
     // identifierForVendor (iOS6 and later, can't be changed on logout),
     // or MAC address (blocked in iOS 7). For more info see https://segment.io/libraries/ios#ids
@@ -46,7 +45,8 @@ static NSString *GetAnonymousId(BOOL reset) {
     return anonymousId;
 }
 
-static NSString *GetDeviceModel() {
+static NSString *GetDeviceModel()
+{
     size_t size;
     sysctlbyname("hw.machine", NULL, &size, NULL, 0);
     char result[size];
@@ -55,56 +55,22 @@ static NSString *GetDeviceModel() {
     return results;
 }
 
-static NSMutableDictionary *BuildStaticContext() {
-    NSMutableDictionary *context = [[NSMutableDictionary alloc] init];
-    
-    context[@"library"] = @"analytics-ios-expa";
-    context[@"library-version"] = SEGStringize(ANALYTICS_VERSION);
-    
-    NSDictionary *infoDictionary = [[NSBundle mainBundle] infoDictionary];
-    if (infoDictionary.count) {
-        context[@"appName"]         = infoDictionary[@"CFBundleDisplayName"];
-        context[@"appShortVersion"] = infoDictionary[@"CFBundleShortVersionString"];
-        context[@"appVersion"]      = infoDictionary[@"CFBundleVersion"];
-        context[@"appBundleId"]     = infoDictionary[@"CFBundleIdentifier"];
-    }
-    
-    UIDevice *device = [UIDevice currentDevice];
-    
-    context[@"deviceManufacturer"] = @"Apple";
-    context[@"deviceModel"] = GetDeviceModel();
-    context[@"deviceId"] = [[device identifierForVendor] UUIDString];
-    
-    context[@"os"] = device.systemName;
-    context[@"osVersion"] = device.systemVersion;
-    
-    CTCarrier *carrier = [[[CTTelephonyNetworkInfo alloc] init] subscriberCellularProvider];
-    if (carrier.carrierName.length)
-        context[@"carrier"] = carrier.carrierName;
-    
-    CGSize screenSize = [UIScreen mainScreen].bounds.size;
-    context[@"screenWidth"] = @(screenSize.width);
-    context[@"screenHeight"] = @(screenSize.height);
-    
-    return context;
+static BOOL GetAdTrackingEnabled()
+{
+    BOOL result = NO;
+    Class advertisingManager = NSClassFromString(SEGAdvertisingClassIdentifier);
+    SEL sharedManagerSelector = NSSelectorFromString(@"sharedManager");
+    id sharedManager = ((id (*)(id, SEL))[advertisingManager methodForSelector:sharedManagerSelector])(advertisingManager, sharedManagerSelector);
+    SEL adTrackingEnabledSEL = NSSelectorFromString(@"isAdvertisingTrackingEnabled");
+    result = ((BOOL (*)(id, SEL))[sharedManager methodForSelector:adTrackingEnabledSEL])(sharedManager, adTrackingEnabledSEL);
+    return result;
 }
 
-static NSString *OrientationString(UIDeviceOrientation orientation)
-{
-    if      (orientation == UIDeviceOrientationUnknown)            { return @"unknown"; }
-    else if (orientation == UIDeviceOrientationPortrait)           { return @"portrait"; }
-    else if (orientation == UIDeviceOrientationPortraitUpsideDown) { return @"portraitUpsideDown"; }
-    else if (orientation == UIDeviceOrientationLandscapeLeft)      { return @"landscapeLeft"; }
-    else if (orientation == UIDeviceOrientationLandscapeRight)     { return @"landscapeRight"; }
-    else if (orientation == UIDeviceOrientationFaceUp)             { return @"faceUp"; }
-    else if (orientation == UIDeviceOrientationFaceDown)           { return @"faceDown"; }
-    else                                                           { return @"error"; }
-}
 
 @interface SEGExpaIntegration ()
 
 @property (nonatomic, strong) NSMutableArray *queue;
-@property (nonatomic, strong) NSMutableDictionary *context;
+@property (nonatomic, strong) NSDictionary *context;
 @property (nonatomic, strong) NSArray *batch;
 @property (nonatomic, strong) SEGAnalyticsRequest *request;
 @property (nonatomic, assign) UIBackgroundTaskIdentifier flushTaskID;
@@ -114,23 +80,15 @@ static NSString *OrientationString(UIDeviceOrientation orientation)
 @property (nonatomic, strong) NSTimer *flushTimer;
 @property (nonatomic, strong) dispatch_queue_t serialQueue;
 @property (nonatomic, strong) NSMutableDictionary *traits;
+@property (nonatomic, assign) BOOL enableAdvertisingTracking;
 
 @end
 
+
 @implementation SEGExpaIntegration
 
-- (NSDictionary *)expaAddedProperties
+- (id)initWithConfiguration:(SEGAnalyticsConfiguration *)configuration
 {
-    NSMutableDictionary *properties = [NSMutableDictionary dictionary];
-    UIDevice *device = [UIDevice currentDevice];
-    properties[@"deviceOrientation"] = OrientationString([device orientation]);
-    if (self.location.hasKnownLocation) {
-        properties[@"location"] = self.location.locationDictionary;
-    }
-    return properties;
-}
-
-- (id)initWithConfiguration:(SEGAnalyticsConfiguration *)configuration {
     if (self = [super init]) {
         self.configuration = configuration;
         self.apiURL = [NSURL URLWithString:EXPA_API_URL_STRING];
@@ -138,64 +96,155 @@ static NSString *OrientationString(UIDeviceOrientation orientation)
         self.userId = [[NSString alloc] initWithContentsOfURL:self.userIDURL encoding:NSUTF8StringEncoding error:NULL];
         self.bluetooth = [[SEGBluetooth alloc] init];
         self.reachability = [SEGReachability reachabilityWithHostname:@"http://google.com"];
-        self.context = BuildStaticContext();
+        [self.reachability startNotifier];
+        self.context = [self staticContext];
         self.flushTimer = [NSTimer scheduledTimerWithTimeInterval:30.0 target:self selector:@selector(flush) userInfo:nil repeats:YES];
-        self.serialQueue = dispatch_queue_create("com.expa.analytics", DISPATCH_QUEUE_SERIAL);
+        self.serialQueue = seg_dispatch_queue_create_specific("com.expa.analytics", DISPATCH_QUEUE_SERIAL);
         self.flushTaskID = UIBackgroundTaskInvalid;
         self.name = @"Expa";
-//        self.settings = @{ @"writeKey": configuration.writeKey };
+        self.settings = @{ @"writeKey" : configuration.writeKey };
         [self validate];
         self.initialized = YES;
     }
     return self;
 }
 
-- (NSMutableDictionary *)liveContext {
+- (NSDictionary *)staticContext
+{
+    NSMutableDictionary *dict = [[NSMutableDictionary alloc] init];
+
+    dict[@"library"] = @{ @"name" : @"analytics-ios-expa",
+                          @"version" : SEGStringize(ANALYTICS_VERSION) };
+
+    NSMutableDictionary *infoDictionary = [[[NSBundle mainBundle] infoDictionary] mutableCopy];
+    [infoDictionary addEntriesFromDictionary:[[NSBundle mainBundle] localizedInfoDictionary]];
+    if (infoDictionary.count) {
+        dict[@"app"] = @{
+                         @"name" : infoDictionary[@"CFBundleDisplayName"] ?: @"",
+                         @"version" : infoDictionary[@"CFBundleShortVersionString"] ?: @"",
+                         @"build" : infoDictionary[@"CFBundleVersion"] ?: @"",
+                         @"namespace" : [[NSBundle mainBundle] bundleIdentifier] ?: @"",
+                         };
+    }
+
+    UIDevice *device = [UIDevice currentDevice];
+
+    dict[@"device"] = ({
+        NSMutableDictionary *dict = [[NSMutableDictionary alloc] init];
+        dict[@"manufacturer"] = @"Apple";
+        dict[@"model"] = GetDeviceModel();
+        dict[@"id"] = [[device identifierForVendor] UUIDString];
+        if (NSClassFromString(SEGAdvertisingClassIdentifier)) {
+            dict[@"adTrackingEnabled"] = @(GetAdTrackingEnabled());
+        }
+        if (self.enableAdvertisingTracking) {
+            NSString *idfa = SEGIDFA();
+            if (idfa.length) dict[@"advertisingId"] = idfa;
+        }
+        dict;
+    });
+
+    dict[@"os"] = @{
+                    @"name" : device.systemName,
+                    @"version" : device.systemVersion
+                    };
+
+    CTCarrier *carrier = [[[CTTelephonyNetworkInfo alloc] init] subscriberCellularProvider];
+    if (carrier.carrierName.length)
+        dict[@"network"] = @{ @"carrier" : carrier.carrierName };
+
+    CGSize screenSize = [UIScreen mainScreen].bounds.size;
+    dict[@"screen"] = @{
+                        @"width" : @(screenSize.width),
+                        @"height" : @(screenSize.height)
+                        };
+
+#if !(TARGET_IPHONE_SIMULATOR)
+    Class adClient = NSClassFromString(SEGADClientClass);
+    if (adClient) {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Warc-performSelector-leaks"
+        id sharedClient = [adClient performSelector:NSSelectorFromString(@"sharedClient")];
+#pragma clang diagnostic pop
+        void (^completionHandler)(BOOL iad) = ^(BOOL iad) {
+            if (iad) {
+                dict[@"referrer"] = @{ @"type" : @"iad" };
+            }
+        };
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Warc-performSelector-leaks"
+        [sharedClient performSelector:NSSelectorFromString(@"determineAppInstallationAttributionWithCompletionHandler:")
+                           withObject:completionHandler];
+#pragma clang diagnostic pop
+    }
+#endif
+
+    return dict;
+}
+
+- (NSDictionary *)liveContext
+{
     NSMutableDictionary *context = [[NSMutableDictionary alloc] init];
-    
-//    [context addEntriesFromDictionary:self.context];
-    
+
+    [context addEntriesFromDictionary:self.context];
+
+    context[@"locale"] = [NSString stringWithFormat:
+                          @"%@-%@",
+                          [NSLocale.currentLocale objectForKey:NSLocaleLanguageCode],
+                          [NSLocale.currentLocale objectForKey:NSLocaleCountryCode]];
+
+    context[@"timezone"] = [[NSTimeZone localTimeZone] name];
+
     context[@"network"] = ({
         NSMutableDictionary *network = [[NSMutableDictionary alloc] init];
-        
+
         if (self.bluetooth.hasKnownState)
             network[@"bluetooth"] = @(self.bluetooth.isEnabled);
-        
-        if (self.reachability.isReachable)
+
+        if (self.reachability.isReachable) {
             network[@"wifi"] = @(self.reachability.isReachableViaWiFi);
-        
+            network[@"cellular"] = @(self.reachability.isReachableViaWWAN);
+        }
+
         network;
     });
-    
+
+    if (self.location.hasKnownLocation)
+        context[@"location"] = self.location.locationDictionary;
+
     context[@"traits"] = ({
-        NSMutableDictionary *traits = [[NSMutableDictionary alloc] init];
-        
+        NSMutableDictionary *traits = [[NSMutableDictionary alloc] initWithDictionary:[self traits]];
+
         if (self.location.hasKnownLocation)
             traits[@"address"] = self.location.addressDictionary;
-        
+
         traits;
     });
-    
-    return context;
+
+    return [context copy];
 }
 
-- (void)dispatchBackground:(void(^)(void))block {
-    dispatch_async(_serialQueue, block);
+- (void)dispatchBackground:(void (^)(void))block
+{
+    seg_dispatch_specific_async(_serialQueue, block);
 }
 
-- (void)dispatchBackgroundAndWait:(void(^)(void))block {
-    dispatch_sync(_serialQueue, block);
+- (void)dispatchBackgroundAndWait:(void (^)(void))block
+{
+    seg_dispatch_specific_sync(_serialQueue, block);
 }
 
-- (void)beginBackgroundTask {
+- (void)beginBackgroundTask
+{
     [self endBackgroundTask];
-    
+
     self.flushTaskID = [[UIApplication sharedApplication] beginBackgroundTaskWithExpirationHandler:^{
         [self endBackgroundTask];
     }];
 }
 
-- (void)endBackgroundTask {
+- (void)endBackgroundTask
+{
     [self dispatchBackgroundAndWait:^{
         if (self.flushTaskID != UIBackgroundTaskInvalid) {
             [[UIApplication sharedApplication] endBackgroundTask:self.flushTaskID];
@@ -204,78 +253,92 @@ static NSString *OrientationString(UIDeviceOrientation orientation)
     }];
 }
 
-- (void)validate {
-    self.valid = ![[self.settings objectForKey:@"off"] boolValue]; //this will always evaluate to YES
+- (void)validate
+{
+    self.valid = ![[self.settings objectForKey:@"off"] boolValue];
 }
 
-- (NSString *)description {
-    return [NSString stringWithFormat:@"<%p:%@>", self, self.class];
+- (NSString *)description
+{
+    return [NSString stringWithFormat:@"<%p:%@, %@>", self, self.class, [self.configuration dictionaryWithValuesForKeys:@[ @"writeKey" ]]];
 }
 
-- (void)saveUserId:(NSString *)userId {
+- (void)saveUserId:(NSString *)userId
+{
     [self dispatchBackground:^{
         self.userId = userId;
-        [_userId writeToURL:self.userIDURL atomically:YES encoding:NSUTF8StringEncoding error:NULL];
+        [self.userId writeToURL:self.userIDURL atomically:YES encoding:NSUTF8StringEncoding error:NULL];
     }];
 }
 
-- (void)addTraits:(NSDictionary *)traits {
+- (void)addTraits:(NSDictionary *)traits
+{
     [self dispatchBackground:^{
-        [_traits addEntriesFromDictionary:traits];
-        [_traits writeToURL:self.traitsURL atomically:YES];
+        [self.traits addEntriesFromDictionary:traits];
+        [[self.traits copy] writeToURL:self.traitsURL atomically:YES];
     }];
 }
 
 #pragma mark - Analytics API
 
-- (void)identify:(NSString *)userId traits:(NSDictionary *)traits options:(NSDictionary *)options {
+- (void)identify:(NSString *)userId traits:(NSDictionary *)traits options:(NSDictionary *)options
+{
     [self dispatchBackground:^{
         [self saveUserId:userId];
         [self addTraits:traits];
     }];
-    
-    NSMutableDictionary *dictionary = [NSMutableDictionary dictionary];
-    [dictionary setValue:traits forKey:@"traits"];
-    [dictionary addEntriesFromDictionary:[self expaAddedProperties]];
-    
-    [self enqueueAction:@"identify" dictionary:dictionary options:options];
+
+    [self enqueueAction:@"identify" dictionary:@{ @"traits" : traits } options:options];
 }
 
-- (void)track:(NSString *)event properties:(NSDictionary *)properties options:(NSDictionary *)options {
+- (void)track:(NSString *)event properties:(NSDictionary *)properties options:(NSDictionary *)options
+{
     NSCParameterAssert(event.length > 0);
-    
+
     NSMutableDictionary *dictionary = [NSMutableDictionary dictionary];
     [dictionary setValue:event forKey:@"event"];
     [dictionary setValue:properties forKey:@"properties"];
-    [dictionary addEntriesFromDictionary:[self expaAddedProperties]];
-    
+
     [self enqueueAction:@"track" dictionary:dictionary options:options];
 }
 
-- (void)screen:(NSString *)screenTitle properties:(NSDictionary *)properties options:(NSDictionary *)options {
+- (void)screen:(NSString *)screenTitle properties:(NSDictionary *)properties options:(NSDictionary *)options
+{
     NSCParameterAssert(screenTitle.length > 0);
-    
+
     NSMutableDictionary *dictionary = [NSMutableDictionary dictionary];
     [dictionary setValue:screenTitle forKey:@"name"];
     [dictionary setValue:properties forKey:@"properties"];
-    [dictionary addEntriesFromDictionary:[self expaAddedProperties]];
-    
+
     [self enqueueAction:@"screen" dictionary:dictionary options:options];
 }
 
-- (void)group:(NSString *)groupId traits:(NSDictionary *)traits options:(NSDictionary *)options {
+- (void)group:(NSString *)groupId traits:(NSDictionary *)traits options:(NSDictionary *)options
+{
     NSCParameterAssert(groupId.length > 0);
-    
+
     NSMutableDictionary *dictionary = [NSMutableDictionary dictionary];
     [dictionary setValue:groupId forKey:@"groupId"];
     [dictionary setValue:traits forKey:@"traits"];
-    
+
     [self enqueueAction:@"group" dictionary:dictionary options:options];
 }
 
-- (void)registerForRemoteNotificationsWithDeviceToken:(NSData *)deviceToken {
+- (void)alias:(NSString *)newId options:(NSDictionary *)options
+{
+    NSCParameterAssert(newId.length > 0);
+
+    NSMutableDictionary *dictionary = [NSMutableDictionary dictionary];
+    [dictionary setValue:newId forKey:@"userId"];
+    [dictionary setValue:self.userId ?: self.anonymousId forKey:@"previousId"];
+
+    [self enqueueAction:@"alias" dictionary:dictionary options:options];
+}
+
+- (void)registerForRemoteNotificationsWithDeviceToken:(NSData *)deviceToken options:(NSDictionary *)options
+{
     NSCParameterAssert(deviceToken != nil);
-    
+
     const unsigned char *buffer = (const unsigned char *)[deviceToken bytes];
     if (!buffer) {
         return;
@@ -289,37 +352,69 @@ static NSString *OrientationString(UIDeviceOrientation orientation)
 
 #pragma mark - Queueing
 
-- (void)enqueueAction:(NSString *)action dictionary:(NSDictionary *)dictionary options:(NSDictionary *)options {
+- (NSDictionary *)integrationsDictionary:(NSDictionary *)integrations
+{
+    NSMutableDictionary *dict = [integrations ?: @{} mutableCopy];
+    for (SEGAnalyticsIntegration *integration in self.configuration.integrations.allValues) {
+        if (![integration isKindOfClass:[SEGExpaIntegration class]]) {
+            dict[integration.name] = @NO;
+        }
+    }
+    return dict;
+}
+
+- (void)enqueueAction:(NSString *)action dictionary:(NSDictionary *)dictionary options:(NSDictionary *)options
+{
     // attach these parts of the payload outside since they are all synchronous
     // and the timestamp will be more accurate.
     NSMutableDictionary *payload = [dictionary mutableCopy];
-    payload[@"action"] = action;
-    payload[@"timestamp"] = [[NSDate date] description];
-    payload[@"requestId"] = GenerateUUIDString();
-    
+    payload[@"type"] = action;
+    payload[@"timestamp"] = iso8601FormattedString([NSDate date]);
+    payload[@"messageId"] = GenerateUUIDString();
+
     [self dispatchBackground:^{
         // attach userId and anonymousId inside the dispatch_async in case
         // they've changed (see identify function)
         [payload setValue:self.userId forKey:@"userId"];
-        [payload setValue:self.anonymousId forKey:@"sessionId"];
+        [payload setValue:self.anonymousId forKey:@"anonymousId"];
+
+        [payload setValue:[self integrationsDictionary:options[@"integrations"]] forKey:@"integrations"];
+
+        NSDictionary *defaultContext = [self liveContext];
+        NSDictionary *customContext = options[@"context"];
+
+        NSUInteger capacity = customContext.count + defaultContext.count;
+        NSMutableDictionary *context = [NSMutableDictionary dictionaryWithCapacity:capacity];
+
+        [context addEntriesFromDictionary:defaultContext];
+        [context addEntriesFromDictionary:customContext]; // let the custom context override ours
+        [payload setValue:context forKey:@"context"];
+
         SEGLog(@"%@ Enqueueing action: %@", self, payload);
-        
-        [payload setValue:[self liveContext] forKey:@"liveContext"];
-        
-        [self queuePayload:payload];
+        [self queuePayload:[payload copy]];
     }];
 }
 
-- (void)queuePayload:(NSDictionary *)payload {
-    [self.queue addObject:payload];
-    [self flushQueueByLength];
+- (void)queuePayload:(NSDictionary *)payload
+{
+    @try {
+        [self.queue addObject:payload];
+        [[self.queue copy] writeToURL:[self queueURL] atomically:YES];
+        [self flushQueueByLength];
+
+    }
+    @catch (NSException *exception) {
+        SEGLog(@"%@ Error writing payload: %@", self, exception);
+    }
 }
 
-- (void)flush {
+- (void)flush
+{
     [self flushWithMaxSize:self.maxBatchSize];
 }
 
-- (void)flushWithMaxSize:(NSUInteger)maxBatchSize {
+- (void)flushWithMaxSize:(NSUInteger)maxBatchSize
+{
     [self dispatchBackground:^{
         if ([self.queue count] == 0) {
             SEGLog(@"%@ No queued API calls to flush.", self);
@@ -332,39 +427,47 @@ static NSString *OrientationString(UIDeviceOrientation orientation)
         } else {
             self.batch = [NSArray arrayWithArray:self.queue];
         }
-        
+
         SEGLog(@"%@ Flushing %lu of %lu queued API calls.", self, (unsigned long)self.batch.count, (unsigned long)self.queue.count);
-        
-        NSMutableDictionary *payloadDictionary = [NSMutableDictionary dictionary];
-//        [payloadDictionary setObject:self.configuration.writeKey forKey:@"secret"];
-        [payloadDictionary setObject:[[NSDate date] description] forKey:@"requestTimestamp"];
+
+        NSMutableDictionary *payloadDictionary = [[NSMutableDictionary alloc] init];
+        [payloadDictionary setObject:self.configuration.writeKey forKey:@"writeKey"];
+        [payloadDictionary setObject:iso8601FormattedString([NSDate date]) forKey:@"sentAt"];
         [payloadDictionary setObject:self.context forKey:@"context"];
         [payloadDictionary setObject:self.batch forKey:@"batch"];
-        
+
         SEGLog(@"Flushing payload %@", payloadDictionary);
-        
+
         NSError *error = nil;
-        NSData *payload = [NSJSONSerialization dataWithJSONObject:payloadDictionary
-                                                          options:0 error:&error];
-        if (error) {
-            SEGLog(@"%@ Error serializing JSON: %@", self, error);
+        NSException *exception = nil;
+        NSData *payload = nil;
+        @try {
+            payload = [NSJSONSerialization dataWithJSONObject:payloadDictionary options:0 error:&error];
         }
-        
-        [self sendData:payload];
+        @catch (NSException *exc) {
+            exception = exc;
+        }
+        if (error || exception) {
+            SEGLog(@"%@ Error serializing JSON: %@", self, error);
+        } else {
+            [self sendData:payload];
+        }
     }];
 }
 
-- (void)flushQueueByLength {
+- (void)flushQueueByLength
+{
     [self dispatchBackground:^{
         SEGLog(@"%@ Length is %lu.", self, (unsigned long)self.queue.count);
-        
+
         if (self.request == nil && [self.queue count] >= self.configuration.flushAt) {
             [self flush];
         }
     }];
 }
 
-- (void)reset {
+- (void)reset
+{
     [self dispatchBackgroundAndWait:^{
         [[NSFileManager defaultManager] removeItemAtURL:self.userIDURL error:NULL];
         [[NSFileManager defaultManager] removeItemAtURL:self.traitsURL error:NULL];
@@ -377,107 +480,125 @@ static NSString *OrientationString(UIDeviceOrientation orientation)
     }];
 }
 
-- (void)notifyForName:(NSString *)name userInfo:(id)userInfo {
+- (void)notifyForName:(NSString *)name userInfo:(id)userInfo
+{
     dispatch_async(dispatch_get_main_queue(), ^{
         [[NSNotificationCenter defaultCenter] postNotificationName:name object:self];
         SEGLog(@"sent notification %@", name);
     });
 }
 
-- (void)sendData:(NSData *)data {
+- (void)sendData:(NSData *)data
+{
     NSMutableURLRequest *urlRequest = [NSMutableURLRequest requestWithURL:self.apiURL];
     [urlRequest setValue:@"gzip" forHTTPHeaderField:@"Accept-Encoding"];
     [urlRequest setValue:@"application/json" forHTTPHeaderField:@"Content-Type"];
     [urlRequest setHTTPMethod:@"POST"];
     [urlRequest setHTTPBody:data];
-    
+
     SEGLog(@"%@ Sending batch API request.", self);
-    self.request = [SEGAnalyticsRequest startWithURLRequest:urlRequest completion:^{
-        [self dispatchBackground:^{
-            if (self.request.error) {
-                SEGLog(@"%@ API request had an error: %@", self, self.request.error);
-                [self notifyForName:kExpaAnalyticsRequestDidFailNotification userInfo:self.batch];
-            }
-            else {
-                SEGLog(@"%@ API request success 200", self);
-                [self.queue removeObjectsInArray:self.batch];
-                [self notifyForName:kExpaAnalyticsRequestDidSucceedNotification userInfo:self.batch];
-            }
-            
-            self.batch = nil;
-            self.request = nil;
-            [self endBackgroundTask];
-        }];
-    }];
+    self.request = [SEGAnalyticsRequest startWithURLRequest:urlRequest
+                                                 completion:^{
+                                                     [self dispatchBackground:^{
+                                                         if (self.request.error) {
+                                                             SEGLog(@"%@ API request had an error: %@", self, self.request.error);
+                                                             [self notifyForName:kExpaAnalyticsRequestDidFailNotification userInfo:self.batch];
+                                                         } else {
+                                                             SEGLog(@"%@ API request success 200", self);
+                                                             [self.queue removeObjectsInArray:self.batch];
+                                                             [[self.queue copy] writeToURL:[self queueURL] atomically:YES];
+                                                             [self notifyForName:kExpaAnalyticsRequestDidSucceedNotification userInfo:self.batch];
+                                                         }
+
+                                                         self.batch = nil;
+                                                         self.request = nil;
+                                                         [self endBackgroundTask];
+                                                     }];
+                                                 }];
     [self notifyForName:kExpaAnalyticsDidSendRequestNotification userInfo:self.batch];
 }
 
-- (void)applicationDidEnterBackground {
+- (void)applicationDidEnterBackground
+{
     [self beginBackgroundTask];
     // We are gonna try to flush as much as we reasonably can when we enter background
     // since there is a chance that the user will never launch the app again.
     [self flush];
 }
 
-- (void)applicationWillTerminate {
+- (void)applicationWillTerminate
+{
     [self dispatchBackgroundAndWait:^{
         if (self.queue.count)
-            [self.queue writeToURL:self.queueURL atomically:YES];
+            [[self.queue copy] writeToURL:self.queueURL atomically:YES];
     }];
 }
 
-#pragma mark - Class Methods
+#pragma mark - Initialization
 
-+ (void)load {
++ (void)load
+{
     [SEGAnalytics registerIntegration:self withIdentifier:@"Expa"];
 }
 
 #pragma mark - Private
 
-- (NSMutableArray *)queue {
+- (NSMutableArray *)queue
+{
     if (!_queue) {
         _queue = [NSMutableArray arrayWithContentsOfURL:self.queueURL] ?: [[NSMutableArray alloc] init];
     }
     return _queue;
 }
 
-- (NSMutableDictionary *)traits {
+- (NSMutableDictionary *)traits
+{
     if (!_traits) {
         _traits = [NSMutableDictionary dictionaryWithContentsOfURL:self.traitsURL] ?: [[NSMutableDictionary alloc] init];
     }
     return _traits;
 }
 
-- (NSUInteger)maxBatchSize {
+- (NSUInteger)maxBatchSize
+{
     return 100;
 }
 
-- (NSURL *)userIDURL {
-    return SEGAnalyticsURLForFilename(@"expa.userID");
+- (NSURL *)userIDURL
+{
+    return SEGAnalyticsURLForFilename(@"segmentio.userId");
 }
 
-- (NSURL *)queueURL {
-    return SEGAnalyticsURLForFilename(@"expa.queue.plist");
+- (NSURL *)queueURL
+{
+    return SEGAnalyticsURLForFilename(@"segmentio.queue.plist");
 }
 
-- (NSURL *)traitsURL {
-    return SEGAnalyticsURLForFilename(@"expa.traits.plist");
+- (NSURL *)traitsURL
+{
+    return SEGAnalyticsURLForFilename(@"segmentio.traits.plist");
 }
 
-- (void)setConfiguration:(SEGAnalyticsConfiguration *)configuration {
+- (void)setConfiguration:(SEGAnalyticsConfiguration *)configuration
+{
     if (self.configuration) {
         [self.configuration removeObserver:self forKeyPath:@"shouldUseLocationServices"];
+        [self.configuration removeObserver:self forKeyPath:@"enableAdvertisingTracking"];
     }
-    
+
     [super setConfiguration:configuration];
-    [self.configuration addObserver:self forKeyPath:@"shouldUseLocationServices" options:NSKeyValueObservingOptionInitial|NSKeyValueObservingOptionNew context:NULL];
+    [self.configuration addObserver:self forKeyPath:@"shouldUseLocationServices" options:NSKeyValueObservingOptionInitial | NSKeyValueObservingOptionNew context:NULL];
+    [self.configuration addObserver:self forKeyPath:@"enableAdvertisingTracking" options:NSKeyValueObservingOptionInitial | NSKeyValueObservingOptionNew context:NULL];
 }
 
 #pragma mark - Key value observing
 
-- (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context {
+- (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context
+{
     if ([keyPath isEqualToString:@"shouldUseLocationServices"]) {
         self.location = [object shouldUseLocationServices] ? [SEGLocation new] : nil;
+    } else if ([keyPath isEqualToString:@"enableAdvertisingTracking"]) {
+        self.enableAdvertisingTracking = [object enableAdvertisingTracking];
     } else if ([keyPath isEqualToString:@"flushAt"]) {
         [self flushQueueByLength];
     } else {
