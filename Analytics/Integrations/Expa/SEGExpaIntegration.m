@@ -14,7 +14,8 @@
 #import "SEGReachability.h"
 #import "SEGLocation.h"
 
-#define EXPA_API_URL_STRING @"https://changeme.collector.expa.com/expadata/clientcollector/changeme"
+// Define this inside your project Build Settings->User Defined flags
+//#define EXPA_API_URL_STRING @"https://changeme.collector.expa.com/expadata/clientcollector/changeme"
 
 NSString *const kExpaAnalyticsDidSendRequestNotification    = @"ExpaAnalyticsDidSendRequest";
 NSString *const kExpaAnalyticsRequestDidSucceedNotification = @"ExpaAnalyticsRequestDidSucceed";
