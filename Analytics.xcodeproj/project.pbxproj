@@ -1945,6 +1945,7 @@
 				CLANG_WARN_BOOL_CONVERSION = YES;
 				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				EXPA_API_URL_STRING = "";
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(SDKROOT)/Developer/Library/Frameworks",
 					"$(inherited)",
@@ -1960,7 +1961,8 @@
 				INFOPLIST_FILE = "iOS Tests/iOS Tests-Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 7.1;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				USE_ANALYTICS_ALL = 1;
+				USE_ANALYTICS_ALL = 0;
+				USE_ANALYTICS_EXPA = 1;
 				WRAPPER_EXTENSION = xctest;
 			};
 			name = Debug;
@@ -1974,6 +1976,7 @@
 				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
 				ENABLE_NS_ASSERTIONS = NO;
+				EXPA_API_URL_STRING = "";
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(SDKROOT)/Developer/Library/Frameworks",
 					"$(inherited)",
@@ -1989,7 +1992,8 @@
 				INFOPLIST_FILE = "iOS Tests/iOS Tests-Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 7.1;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				USE_ANALYTICS_ALL = 1;
+				USE_ANALYTICS_ALL = 0;
+				USE_ANALYTICS_EXPA = 1;
 				WRAPPER_EXTENSION = xctest;
 			};
 			name = Release;
