@@ -1,4 +1,16 @@
 
+2.0.10 / 2015-09-16
+===================
+
+  * Merge pull request #432 from segmentio/uxcam
+  * uxcam: update header
+  * bump uxcam
+
+2.0.9 / 2015-09-15
+==================
+
+  * Fix podfile for 0.38.0+
+
 2.0.8 / 2015-09-11
 ==================
 
