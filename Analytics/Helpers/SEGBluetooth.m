@@ -33,7 +33,7 @@ const NSString *SEGCentralManagerClass = @"CBCentralManager";
 
     // Check if we can use newer CoreBluetooth functions
     BOOL hasOptions = [centralManager instancesRespondToSelector:@selector(initWithDelegate:queue:options:)];
-    if (hasOptions) {
+    if (hasOptions && &CBCentralManagerOptionShowPowerAlertKey) {
         _manager = [[centralManager alloc] initWithDelegate:self queue:_queue options:@{ CBCentralManagerOptionShowPowerAlertKey : @NO }];
     } else {
         _manager = [[centralManager alloc] initWithDelegate:self queue:_queue];

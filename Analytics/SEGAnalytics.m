@@ -25,7 +25,7 @@ static SEGAnalytics *__sharedInstance = nil;
 
 + (instancetype)configurationWithWriteKey:(NSString *)writeKey
 {
-    return [[self alloc] initWithConfiguration:[SEGAnalyticsConfiguration configurationWithWriteKey:writeKey]];
+    return [[self alloc] initWithWriteKey:writeKey];
 }
 
 - (id)initWithWriteKey:(NSString *)writeKey
