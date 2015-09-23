@@ -22,6 +22,8 @@
 NSString *const kExpaAnalyticsDidSendRequestNotification    = @"ExpaAnalyticsDidSendRequest";
 NSString *const kExpaAnalyticsRequestDidSucceedNotification = @"ExpaAnalyticsRequestDidSucceed";
 NSString *const kExpaAnalyticsRequestDidFailNotification    = @"ExpaAnalyticsRequestDidFail";
+
+#pragma mark - Functions
 static NSString *GenerateUUIDString()
 {
     CFUUIDRef theUUID = CFUUIDCreate(NULL);
