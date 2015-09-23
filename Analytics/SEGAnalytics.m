@@ -25,7 +25,10 @@ static SEGAnalytics *__sharedInstance = nil;
 
 + (instancetype)configurationWithWriteKey:(NSString *)writeKey
 {
-    return [[self alloc] initWithConfiguration:[SEGAnalyticsConfiguration configurationWithWriteKey:writeKey]];
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+    return [[self alloc] initWithWriteKey:writeKey];
+#pragma clang diagnostic pop
 }
 
 - (id)initWithWriteKey:(NSString *)writeKey
