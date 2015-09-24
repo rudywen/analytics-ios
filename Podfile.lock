@@ -1,5 +1,5 @@
 PODS:
-  - Amplitude-iOS (3.0.0)
+  - Amplitude-iOS (3.0.1)
   - AppsFlyer-SDK (2.5.3.15.1)
   - Apptimize (2.11.0.1)
   - Bugsnag (4.0.7):
@@ -14,7 +14,7 @@ PODS:
   - GoogleAnalytics (3.13.0)
   - GoogleIDFASupport (3.12.0)
   - Kahuna (2.0.3)
-  - Localytics (3.3.0)
+  - Localytics (3.5.0)
   - Mixpanel (2.8.2):
     - Mixpanel/Mixpanel (= 2.8.2)
   - Mixpanel/Mixpanel (2.8.2)
@@ -33,7 +33,7 @@ PODS:
   - UXCam (2.3.2)
 
 DEPENDENCIES:
-  - Amplitude-iOS (= 3.0.0)
+  - Amplitude-iOS (= 3.0.1)
   - AppsFlyer-SDK (= 2.5.3.15.1)
   - Apptimize (= 2.11.0.1)
   - Bugsnag (= 4.0.7)
@@ -44,7 +44,7 @@ DEPENDENCIES:
   - GoogleAnalytics (= 3.13.0)
   - GoogleIDFASupport (= 3.12.0)
   - Kahuna (= 2.0.3)
-  - Localytics (= 3.3.0)
+  - Localytics (= 3.5.0)
   - Mixpanel (= 2.8.2)
   - MoEngage-iOS-SDK (= 1.4.3)
   - OCMock (~> 3.1.2)
@@ -57,7 +57,7 @@ DEPENDENCIES:
   - UXCam (= 2.3.2)
 
 SPEC CHECKSUMS:
-  Amplitude-iOS: 07875b822c2c935ea7f8021830d375ed4d812d31
+  Amplitude-iOS: 4016a201afba201865b4c84d23df0d49ed13d5a6
   AppsFlyer-SDK: 34670f7a518e82cfba54dc8ad7738bacf4117b9c
   Apptimize: 5ec482ca36dbec7bd5017f546509136229aa1822
   Bugsnag: 5861d8519d30063abe7b3fcdcf4114a6dddab27a
@@ -68,7 +68,7 @@ SPEC CHECKSUMS:
   GoogleAnalytics: fcf1f1cad57ae1a9a53520018f0f680ceeeb8b49
   GoogleIDFASupport: 0dd25ffdd152fd8e3deefd72978b42ef818ef0fa
   Kahuna: 06c3dea6aee22f5ae9c3eb6a6b9ae703cd5dd5cb
-  Localytics: 64ada284cde3f2b30fb04272d5d735d49657d0ab
+  Localytics: 856c2183047b3d9d7c4c0bbbbe95cc3fe110fe77
   Mixpanel: f4d71ac2a306e7cda6ad03d4a2be249a0fd7a967
   MoEngage-iOS-SDK: 81be7a433349a7d535c905a08629359eeefe0952
   OCHamcrest: 6f03ffa81d12feab872638490a44ab0a6d3aca10
