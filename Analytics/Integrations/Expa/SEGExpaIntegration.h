@@ -1,9 +1,9 @@
 //
-//  ExpaProvider.h
+//  SEGExpaIntegration.h
 //  Analytics
 //
 //  Created by Justin Ho on 3/19/14.
-//  Copyright (c) 2014 Expa. All rights reserved.
+//  Copyright (c) 2014 flare. All rights reserved.
 //
 
 #import <Foundation/Foundation.h>
